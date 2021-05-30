@@ -1,0 +1,80 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..d77c8c2
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++*.pyc
++temp
+diff --git a/__init__.py b/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/cluster_methods/projection_cluster.py b/cluster_methods/projection_cluster.py
+index 421c898..1e33f72 100644
+--- a/cluster_methods/projection_cluster.py
++++ b/cluster_methods/projection_cluster.py
+@@ -1,4 +1,4 @@
+-import igraph
++import jgraph as igraph
+ import numpy as np
+ import pandas as pd
+ import copy
+diff --git a/demo.py b/demo.py
+new file mode 100644
+index 0000000..2a6e0c9
+--- /dev/null
++++ b/demo.py
+@@ -0,0 +1,27 @@
++from cluster_methods.missingness_cluster import miscluster
++from cluster_methods.projection_cluster import projcluster
++from model.model import gsrs
++from tools.tools import *
++from sys import path
++import pandas as pd
++import numpy as np
++import time
++
++data = pd.read_csv(r'data/movielens_data.csv', header=None)
++
++data = data.sample(frac=1).reset_index(drop=True)
++split_index = int(len(data) * 0.8)
++train = data[:split_index].reset_index(drop=True)
++test = data[split_index:].reset_index(drop=True)
++
++ug,ig = miscluster(train, 10)
++clusters = {}
++clusters['uclusters'] = ug
++clusters['iclusters'] = ig
++
++paras = {'lambda':10, 'K':300, 'nstep':50, 'stopall':1e-3, 'stopone':1e-5, 'verbose':True, 'bias': False}
++test1 = gsrs(paras)
++test1.train(train[[0,1]], train[2], clusters)
++result = np.array(test1.predict(test[[0,1]]))
++result_1 = np.array(test)
++print(str(rmse_evaluate(test[2], result)))
+diff --git a/model/model.py b/model/model.py
+index ab5e468..f159715 100644
+--- a/model/model.py
++++ b/model/model.py
+@@ -17,7 +17,7 @@ class gsrs():
+         self.stopall = paras['stopall'] if 'stopall' in paras else 1e-3
+         self.stopone = paras['stopone'] if 'stopone' in paras else 1e-5
+         self.bias = paras['bias'] if 'bias' in paras else False
+-        self.verbose = verbose
++        self.verbose = paras['verbose'] if 'verbose' in paras else verbose
+ 
+         self.p = None
+         self.q = None
+diff --git a/scripts/__init__.py b/scripts/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/scripts/demo.py b/scripts/demo.py
+index 40f7bdb..fd0d8b8 100644
+--- a/scripts/demo.py
++++ b/scripts/demo.py
+@@ -23,4 +23,4 @@ paras = {'lambda':10, 'K':300, 'nstep':50, 'stopall':1e-3, 'stopone':1e-5, 'verb
+ test1 = gsrs(paras)
+ test1.train(train[[0,1]], train[2], clusters)
+ result = np.array(test1.predict(test[[0,1]]))
+-print(str(ucold), str(icold), str(rmse_evaluate(test[2], result)), str(rmse_evaluate(test[2], result_1)))
++print(str(rmse_evaluate(test[2], result)), str(rmse_evaluate(test[2], result_1)))
